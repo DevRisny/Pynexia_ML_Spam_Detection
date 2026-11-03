@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SpamShield · NLP spam & phishing detector</title>
+<meta name="description" content="Paste any message and see whether it is spam, the exact words that gave it away and the phishing tricks it uses. A Linear SVM trained on 5,171 real messages, running entirely in your browser.">
+<meta property="og:title" content="SpamShield · NLP spam & phishing detector">
+<meta property="og:description" content="Live, explainable spam detection: 99% accuracy, runs in your browser.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2 4 7v8c0 7.3 5 13.4 12 15 7-1.6 12-7.7 12-15V7L16 2Z' fill='%232f6feb'/%3E%3Cpath d='m10.5 16 3.8 3.8 7.2-7.6' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="nav" id="nav">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="SpamShield home">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4f86ff"/><stop offset="1" stop-color="#6d5efc"/></linearGradient></defs><path d="M16 2 4 7v8c0 7.3 5 13.4 12 15 7-1.6 12-7.7 12-15V7L16 2Z" fill="url(#lg)"/><path d="m10.5 16 3.8 3.8 7.2-7.6" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      SpamShield
+    </a>
+    <nav class="nav-links" aria-label="Sections">
+      <a href="#inbox">Live inbox</a>
+      <a href="#pipeline">How it decides</a>
+      <a href="#performance">Performance</a>
+      <a class="btn btn-ghost" href="https://github.com/DevRisny/Pynexia_ML_Spam_Detection">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17.3 4.7 18.3 5 18.3 5c.7 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5Z"/></svg>
+        Source
+      </a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <!-- ============================================================ HERO -->
+  <section class="hero">
+    <div class="mesh" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="grid-bg" aria-hidden="true"></div>
+    <div class="wrap">
+      <div>
+        <span class="pill"><b>Live</b> Runs offline in your browser</span>
+        <h1>Is this message trying to trick you?</h1>
+        <p class="lede">Paste any SMS or email. SpamShield tells you if it is spam, highlights the exact words that gave it away and names the phishing tricks it uses.</p>
+        <div class="cta">
+          <a class="btn btn-primary" href="#msg">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            Check a message
+          </a>
+          <a class="btn btn-ghost" href="#performance">See how accurate it is</a>
+        </div>
+        <div class="kpis num">
+          <div><b id="k-acc">99.0%</b><span>accuracy</span></div>
+          <div><b id="k-f1">96.2%</b><span>spam F1</span></div>
+          <div><b id="k-auc">0.998</b><span>ROC AUC</span></div>
+          <div><b id="k-n">5,171</b><span>messages learned</span></div>
+        </div>
+      </div>
+
+      <div class="inspector" id="inspector">
+        <div class="insp-top">
+          <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="status" id="status"><i></i>Model ready</div>
+        </div>
+        <div class="composer">
+          <label for="msg">Message to check</label>
+          <div class="field">
+            <textarea id="msg" spellcheck="false" placeholder="Paste a message here…"></textarea>
+            <div class="scan" id="scan" aria-hidden="true"></div>
+          </div>
+          <div class="samples" role="group" aria-label="Load an example">
+            <span>Examples:</span>
+            <button class="chip" data-s="URGENT: Your bank account has been suspended. Verify your details now at www.secure-bank-verify.com or call 09061701461 to avoid closure."><i style="background:var(--spam)"></i>Bank phishing</button>
+            <button class="chip" data-s="Congratulations! You've WON a £1000 cash prize. Text CLAIM to 87121 now to receive your reward. T&Cs apply."><i style="background:var(--spam)"></i>Prize scam</button>
+            <button class="chip" data-s="Hey, are we still meeting at the library at 5? I'll bring the lecture notes."><i style="background:var(--safe)"></i>Friend</button>
+            <button class="chip" data-s="Mum says dinner is ready by 8, can you pick up bread on your way home?"><i style="background:var(--safe)"></i>Family</button>
+          </div>
+        </div>
+
+        <div class="verdict" aria-live="polite">
+          <div class="gauge">
+            <svg viewBox="0 0 120 120" aria-hidden="true">
+              <circle class="track" cx="60" cy="60" r="50" fill="none" stroke-width="12"/>
+              <circle class="arc" id="arc" cx="60" cy="60" r="50" fill="none" stroke-width="12" stroke-linecap="round" stroke="#c9d4e6" stroke-dasharray="314.16" stroke-dashoffset="314.16"/>
+            </svg>
+            <div class="center"><b id="pct" class="num">–</b><span>spam chance</span></div>
+          </div>
+          <div class="verdict-text">
+            <h3 id="vtitle" class="idle">Waiting for a message</h3>
+            <p id="vsub">Type or paste a message, or load an example.</p>
+            <div class="flags" id="flags"></div>
+          </div>
+        </div>
+
+        <div class="evidence">
+          <div class="evidence-head">
+            <h4>The words that decided it</h4>
+            <div class="legend"><span><i style="background:#ff9f9a"></i>towards spam</span><span><i style="background:#88e1cd"></i>towards safe</span></div>
+          </div>
+          <div class="marked" id="marked"><span class="muted">Loading the model…</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ INBOX -->
+  <section class="block alt" id="inbox">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Watch it sort a real-looking inbox</h2>
+        <p>Each message below is scored by the same model, one after another. Select any message to open it in the inspector and see why it was flagged.</p>
+      </div>
+      <div class="inbox-shell">
+        <div class="inbox">
+          <div class="inbox-bar">Inbox <span id="inbox-count">8 messages</span></div>
+          <div id="mails"></div>
+        </div>
+        <div class="inbox-side">
+          <div class="stat-card">
+            <h4>Result</h4>
+            <div class="split num">
+              <div class="s"><b id="n-spam">0</b><span>blocked as spam</span></div>
+              <div class="h"><b id="n-ham">0</b><span>delivered as safe</span></div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <h4>Why this matters</h4>
+            <p>Phishing messages copy the tone of banks, couriers and prize draws. A filter has to catch them without hiding real messages from friends and family, so both mistakes are measured below.</p>
+          </div>
+          <button class="btn btn-ghost" id="rescan" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>
+            Scan the inbox again
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ PIPELINE -->
+  <section class="block" id="pipeline">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>How it decides, step by step</h2>
+        <p>These panels follow the message in the inspector through the model, live. Change the message and every step updates. The browser runs the exact model trained in Python: on all 5,171 messages both give the same answer.</p>
+      </div>
+      <div class="pipe">
+        <article class="stage">
+          <div class="n">1</div><h3>Mask</h3>
+          <p>Links, phone numbers, money and numbers become placeholders, so the model learns the pattern rather than one number.</p>
+          <div class="live" id="p-mask"></div>
+        </article>
+        <article class="stage">
+          <div class="n">2</div><h3>Tokenise & clean</h3>
+          <p>Split into words, then drop common words such as "the" and "is" that carry no signal.</p>
+          <div class="live" id="p-tok"></div>
+        </article>
+        <article class="stage">
+          <div class="n">3</div><h3>Stem</h3>
+          <p>The Porter stemmer reduces each word to its root, so "winning" and "wins" count as one word.</p>
+          <div class="live" id="p-stem"></div>
+        </article>
+        <article class="stage">
+          <div class="n">4</div><h3>TF-IDF features</h3>
+          <p>Words, word pairs and 3–5 letter pieces become weighted features. Letter pieces catch tricks like "fr33".</p>
+          <div class="live" id="p-feat"></div>
+        </article>
+        <article class="stage">
+          <div class="n">5</div><h3>Linear SVM</h3>
+          <p>Feature weights are added into one score, and Platt scaling turns that score into a probability.</p>
+          <div class="live eq" id="p-svm"></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ PERFORMANCE -->
+  <section class="block alt" id="performance">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Tested on 1,035 messages it never saw</h2>
+        <p>Three models were tuned with 5-fold cross-validation on 80% of the data, then tested once on the remaining 20%. Every number on this page comes from that held-out test set.</p>
+      </div>
+      <div class="dash">
+        <div class="card">
+          <h3>Threshold explorer</h3>
+          <p class="sub">A message is called spam when its spam chance is above the threshold. Move it to trade missed spam against blocked real messages. These are calibrated probabilities, so at 50% the counts can differ by one message from the raw SVM decision used in the leaderboard.</p>
+          <div class="slider-row">
+            <label for="thr">Threshold</label>
+            <input type="range" id="thr" min="0.05" max="0.95" step="0.01" value="0.5">
+            <output id="thr-out" class="num" for="thr">50%</output>
+          </div>
+          <div class="tiles num">
+            <div class="tile"><b id="t-acc">–</b><span>accuracy</span></div>
+            <div class="tile"><b id="t-p">–</b><span>precision</span></div>
+            <div class="tile"><b id="t-r">–</b><span>recall</span></div>
+            <div class="tile"><b id="t-f">–</b><span>F1</span></div>
+          </div>
+          <div class="explore">
+            <div class="cm num" aria-label="Confusion matrix">
+              <span></span><span class="h">said safe</span><span class="h">said spam</span>
+              <span class="r">safe</span><div class="c tn"><b id="c-tn">–</b><small>correct</small></div><div class="c fp"><b id="c-fp">–</b><small>wrongly blocked</small></div>
+              <span class="r">spam</span><div class="c fn"><b id="c-fn">–</b><small>missed</small></div><div class="c tp"><b id="c-tp">–</b><small>caught</small></div>
+            </div>
+            <div class="pr" id="pr"></div>
+          </div>
+        </div>
+
+        <div class="card board">
+          <h3>Model leaderboard</h3>
+          <p class="sub">Same features, same split. The Linear SVM had the best F1, the fairest score when only 13% of messages are spam.</p>
+          <div id="board"></div>
+          <div class="dataset">
+            <svg viewBox="0 0 42 42" aria-hidden="true" id="donut"></svg>
+            <p><b>SMS Spam Collection</b> (UCI): 5,574 real messages, 5,171 after removing duplicates. <b id="d-spam">653</b> spam, <b id="d-ham">4,518</b> normal.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:22px">
+        <h3>What spam sounds like</h3>
+        <p class="sub">Words that Naive Bayes links most strongly to each class. Spam pushes prizes, cash and a number to call; normal messages sound like conversation.</p>
+        <div class="gallery">
+          <figure class="wide"><img src="images/top_words.png" alt="Words most linked to spam (call, claim, prize, cash) and to normal messages (later, home, sleep)" loading="lazy"></figure>
+          <figure><img src="images/confusion_matrices.png" alt="Confusion matrices for the three models" loading="lazy"><figcaption>Confusion matrices for all three models at the default 50% threshold.</figcaption></figure>
+          <figure><img src="images/eda.png" alt="Class balance and message length by class" loading="lazy"><figcaption>Spam is rare (13%) and tends to be longer than normal messages.</figcaption></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ STACK -->
+  <section class="block" id="build">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>How it was built</h2>
+        <p>A full machine learning workflow, from raw text to a model anyone can try in one click.</p>
+      </div>
+      <div class="stack">
+        <div class="card"><h3>Data & NLP</h3>
+          <ul><li>pandas for loading and de-duplication</li><li>Regex masking for links, phones and money</li><li>NLTK Porter stemmer, custom stop-word list</li></ul></div>
+        <div class="card"><h3>Modelling</h3>
+          <ul><li>scikit-learn pipelines with TF-IDF word + character n-grams</li><li>Naive Bayes, Linear SVM and Logistic Regression</li><li>GridSearchCV, stratified 5-fold, Platt scaling</li></ul></div>
+        <div class="card"><h3>Deployment</h3>
+          <ul><li>Model exported to JSON (vocabularies, IDF, weights)</li><li>Same pipeline re-implemented in JavaScript and checked against Python on every message</li><li>Static site on GitHub Pages, no server</li></ul></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Designed and built by <b>Junaideen Risny Suha</b> · Pynexia Machine Learning Internship, Week 2</span>
+    <span><a href="https://github.com/DevRisny/Pynexia_ML_Spam_Detection">GitHub</a> &nbsp;·&nbsp; <a href="https://linkedin.com/in/risny-suha-8a6b66423">LinkedIn</a></span>
+  </div>
+</footer>
+
+<script src="spam-engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
